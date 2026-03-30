@@ -11,7 +11,12 @@ interface DictationInputProps {
 }
 
 const normalizeText = (text: string) => {
-  return text.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()?"']/g, " ").trim().split(/\s+/)
+  return text.toLowerCase()
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()?"–—“”]/g, " ") // Đã thêm “” 
+    .replace(/[‘’]/g, "'") // Chuẩn hóa dấu nháy thông minh thành dấu nháy đơn
+    .trim()
+    .split(/\s+/)
+    .filter(word => word.length > 0 && /[a-z0-9]/.test(word))
 }
 
 export function DictationInput({ segmentId, correctText, onSuccess, onStateChange }: DictationInputProps) {
@@ -21,7 +26,9 @@ export function DictationInput({ segmentId, correctText, onSuccess, onStateChang
   const [isTranslating, setIsTranslating] = useState(false)
 
   const targetWords = normalizeText(correctText)
+  console.log("targetWords", targetWords)
   const inputWords = normalizeText(inputVal)
+  console.log("inputWords", inputWords)
 
   // Reset local state when segment changes
   useEffect(() => {
@@ -64,7 +71,7 @@ export function DictationInput({ segmentId, correctText, onSuccess, onStateChang
 
   const handleTranslate = async () => {
     if (translation || isTranslating) return
-    
+
     setIsTranslating(true)
     try {
       const res = await fetch(`/api/practice/segments/${segmentId}/translate`, {
@@ -103,11 +110,11 @@ export function DictationInput({ segmentId, correctText, onSuccess, onStateChang
           disabled={isTranslating}
           className={clsx(
             "flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all px-4 py-2 rounded-xl border backdrop-blur-sm",
-            translation 
-              ? "text-teal-400 bg-teal-400/5 border-teal-400/20 shadow-[0_0_15px_rgba(20,184,166,0.05)]" 
-              : (isTranslating 
-                  ? "text-slate-500 bg-slate-800/80 border-slate-700/50 cursor-wait" 
-                  : "text-blue-400/80 hover:text-blue-400 bg-blue-400/10 hover:bg-blue-400/20 border-blue-400/20 active:scale-95")
+            translation
+              ? "text-teal-400 bg-teal-400/5 border-teal-400/20 shadow-[0_0_15px_rgba(20,184,166,0.05)]"
+              : (isTranslating
+                ? "text-slate-500 bg-slate-800/80 border-slate-700/50 cursor-wait"
+                : "text-blue-400/80 hover:text-blue-400 bg-blue-400/10 hover:bg-blue-400/20 border-blue-400/20 active:scale-95")
           )}
         >
           {isTranslating ? (
@@ -158,7 +165,7 @@ export function DictationInput({ segmentId, correctText, onSuccess, onStateChang
         <div className="w-full mt-2 p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 flex flex-wrap gap-2 text-lg">
           {targetWords.map((targetWord, index) => {
             const inputWord = inputWords[index]
-            
+
             if (!inputWord) {
               return <span key={index} className="text-slate-600 blur-[2px] transition-all">{"_".repeat(targetWord.length)}</span>
             }
@@ -167,8 +174,8 @@ export function DictationInput({ segmentId, correctText, onSuccess, onStateChang
             const isTypingCurrently = index === inputWords.length - 1 && inputVal.endsWith(' ') === false
 
             return (
-              <span 
-                key={index} 
+              <span
+                key={index}
                 className={clsx(
                   "px-1 py-0.5 rounded transition-all duration-300",
                   isCorrect ? "text-emerald-400" : (isTypingCurrently ? "text-slate-300" : "text-rose-400 line-through decoration-rose-400/50 bg-rose-500/10")

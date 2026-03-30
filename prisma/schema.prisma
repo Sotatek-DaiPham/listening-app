@@ -79,9 +79,10 @@ model Segment {
   endTime     Int
   text        String
   audioUrl    String
-  createdAt   DateTime       @default(now())
-  translation String?
-  media       Media          @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now())
+  translation     String?
+  grammarAnalysis String?
+  media           Media          @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   progress    UserProgress[]
 }
 
