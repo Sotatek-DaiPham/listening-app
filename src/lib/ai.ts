@@ -46,11 +46,11 @@ export async function analyzeGrammar(text: string): Promise<string> {
   }
 
   try {
-    const prompt = `Bạn là một chuyên gia ngôn ngữ học. Hãy phân tích cấu trúc ngữ pháp và từ vựng của câu tiếng Anh dưới đây. 
-    Giải thích bằng TIẾNG VIỆT, phong cách CỰC KỲ NGẮN GỌN, SÚC TÍCH, chỉ nêu những điểm quan trọng nhất. 
-    Không giải thích rườm rà. Sử dụng tối đa 3-4 gạch đầu dòng.
+    const prompt = `Bạn là một chuyên gia ngôn ngữ học. Đối với câu tiếng Anh dưới đây, hãy thực hiện:
+    1. Dịch câu sang tiếng Việt một cách tự nhiên nhất.
+    2. Phân tích cấu trúc ngữ pháp và từ vựng quan trọng (phong cách CỰC KỲ NGẮN GỌN, SÚC TÍCH, tối đa 3-4 gạch đầu dòng).
     
-    Câu cần phân tích: "${text}"`;
+    Câu cần xử lý: "${text}"`;
 
     console.log("Gemini Grammar Prompt:", prompt);
     const result = await model.generateContent(prompt);

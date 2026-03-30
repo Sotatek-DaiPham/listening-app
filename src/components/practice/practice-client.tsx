@@ -35,6 +35,19 @@ export function PracticeClient({ mediaId, mediaTitle, segments, initialIndex = 0
     setIsAnalyzing(false)
   }, [currentIndex])
 
+  // Global keydown listener for Enter key to go to next segment
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && isCurrentSegmentMastered) {
+        e.preventDefault()
+        handleSuccess()
+      }
+    }
+
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [isCurrentSegmentMastered, currentIndex]) // Add currentIndex to deps if handleSuccess relies on it
+
   const currentSegment = segments[currentIndex]
   const isFinished = currentIndex >= segments.length
 
@@ -203,15 +216,29 @@ export function PracticeClient({ mediaId, mediaTitle, segments, initialIndex = 0
                         ) : "Analyze Grammar"}
                       </button>
                       <button
-                        onClick={handleSuccess}
-                        className="flex items-center px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-900 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all shadow-[0_4px_12px_rgba(16,185,129,0.2)] active:scale-95"
-                      >
-                        Next Segment
-                        <svg className="w-3.5 h-3.5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                      </button>
+                      onClick={handleSuccess}
+                      className="flex items-center px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-900 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all shadow-[0_4px_12px_rgba(16,185,129,0.2)] active:scale-95 group"
+                    >
+                      Next Segment
+                      <span className="ml-2 text-[8px] bg-slate-900/20 px-1 rounded border border-slate-900/10 opacity-70 group-hover:opacity-100 transition-opacity">ENTER</span>
+                      <svg className="w-3.5 h-3.5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    </button>
                     </div>
+                  </div>
+
+                  {/* Original Sentence Display */}
+                  <div className="w-full p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300">
+                    <h4 className="text-[10px] font-bold text-emerald-400/80 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Original Sentence
+                    </h4>
+                    <p className="text-lg sm:text-xl font-medium text-slate-100 leading-relaxed italic decoration-teal-500/30 underline-offset-8">
+                      "{currentSegment.text}"
+                    </p>
                   </div>
 
                   {grammarAnalysis && (
