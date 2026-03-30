@@ -21,7 +21,12 @@ Hệ thống phân tách luồng dữ liệu thành 2 nguồn độc lập:
 - **Thư viện Hệ thống (Public Library):** Do Admin upload và quản lý (có phân hệ Admin riêng). User chỉ có quyền Read & Practice.
 - **Thư viện Cá nhân (Bring-your-own-media):** User tự tải MP3 và SRT lên. File được xử lý và lưu trữ trong không gian riêng (chỉ User đó thấy và học). Yêu cầu Backend + Database để quản lý sở hữu file.
 
+### 2.4. Hỗ trợ học tập AI (AI Learning Assistant)
+- **Dịch thuật & Phân tích ngữ pháp**: Sử dụng Gemini AI để cung cấp bản dịch và giải thích ngữ pháp chuyên sâu cho từng câu sau khi người dùng hoàn thành chính xác.
+- **Tối ưu hóa học tập**: Giải thích ngắn gọn, súc tích bằng tiếng Việt, tập trung vào các điểm ngữ pháp khó và từ vựng mới.
+
 ## 3. Tech Stack
 - **Frontend & API:** Next.js (App Router) + TailwindCSS.
+- **AI Service:** Google Generative AI (Gemini).
 - **Backend Services:** Next.js API Routes + fluent-ffmpeg.
-- **Database:** PostgreSQL (Lưu trữ User, Media Metadata, Progress) + Local/S3 storage cho Audio.
+- **Database:** PostgreSQL (Lưu trữ User, Media Metadata, Progress, AI Cache) + Local/S3 storage cho Audio.

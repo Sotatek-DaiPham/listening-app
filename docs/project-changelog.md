@@ -1,5 +1,19 @@
 # Project Changelog
 
+## [0.2.0] - 2026-03-30
+
+### Added
+- **AI Grammar Analysis**: Integrated Gemini AI to provide natural Vietnamese translations and concise grammar insights for each segment.
+- **Dynamic Original Sentence Reveal**: Automatically displays the correct text after a successful match to reinforce learning.
+- **Keyboard Shortcuts**: Added (Enter) shortcut to quickly skip to the next segment after mastery.
+- **Markdown Rendering**: Integrated `react-markdown` for styled, readable AI explanations with teal-colored highlights.
+- **Smart Text Normalization**: Enhanced text-matching engine to handle smart quotes (`“”`, `‘’`) and diverse punctuation (em-dash, etc.).
+- **AI Response Caching**: Implemented database persistence for AI analysis to optimize performance and reduce API costs.
+
+### Fixed
+- **Prisma Client Sync**: Resolved Windows file-lock issues (`EPERM`) by automating node process termination during schema updates.
+- **Input Accuracy**: Improved normalization logic in `DictationInput` to filter out non-alphanumeric noise and handle smart punctuation.
+
 ## [0.1.0] - 2026-03-27
 
 ### Added

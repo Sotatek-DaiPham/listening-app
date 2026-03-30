@@ -23,7 +23,9 @@
 - [x] User Library Dashboard (BYOM Upload)
 - [x] Auth Refactor (In-app Modals)
 
-## Phase 6: Refinement & Advanced Features (Roadmapped)
-- [ ] AI-Powered Grammar & Translation Insights
+## Phase 6: Refinement & Advanced Features (Complete)
+- [x] AI-Powered Grammar & Translation Insights (Gemini)
+- [x] UX Improvements: Original Sentence Reveal & (Enter) Shortcut
+- [x] Multi-format Text Normalization (Quotes/Smart Punctuation)
 - [ ] Mobile-Responsive PWA Optimization
 - [ ] Direct YouTube/Google Drive Import
