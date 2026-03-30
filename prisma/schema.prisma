@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String?        @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  accounts      Account[]
+  media         Media[]
+  sessions      Session[]
+  progress      UserProgress[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Media {
+  id                String         @id @default(cuid())
+  userId            String
+  title             String
+  sourceUrl         String
+  srtUrl            String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  errorMessage      String?
+  processedSegments Int            @default(0)
+  status            String         @default("PENDING")
+  totalSegments     Int            @default(0)
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  segments          Segment[]
+  progress          UserProgress[]
+}
+
+model Segment {
+  id          String         @id @default(cuid())
+  mediaId     String
+  startTime   Int
+  endTime     Int
+  text        String
+  audioUrl    String
+  createdAt   DateTime       @default(now())
+  translation String?
+  media       Media          @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  progress    UserProgress[]
+}
+
+model UserProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  mediaId     String
+  segmentId   String
+  isCompleted Boolean  @default(false)
+  attempts    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  media       Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  segment     Segment  @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, segmentId])
+}
