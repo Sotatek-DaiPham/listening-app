@@ -14,7 +14,7 @@ Linguist Dictation Master is a full-stack Next.js application designed for activ
 ## Directory Structure
 - `src/app/`: Core routing and API handlers.
   - `/api/library`: Upload and media management.
-  - `/api/practice`: Transcription, progress tracking, and **AI grammar analysis**.
+  - `/api/practice`: Transcription, progress tracking, **AI grammar analysis**, and **bookmarks**.
   - `/practice/[id]`: The specialized dictation arena.
   - `/library`: User media dashboard.
 - `src/components/`: Modular UI: `practice/`, `auth/`, etc.
@@ -24,4 +24,4 @@ Linguist Dictation Master is a full-stack Next.js application designed for activ
 - `plans/`: Implementation plans and research reports.
 
 ## State of the Code
-The core feature set (Phase 1-5) is complete and production-ready. The application supports user authentication, media upload, automated slicing, and a tracked dictation workflow. Next milestones involve AI-driven educational enhancements.
+The core feature set (Phase 1-5) is complete and production-ready. The application supports user authentication, media upload, automated slicing, a tracked dictation workflow, an enhanced audio player with volume persistence, sentence bookmarking with a favorites sidebar, and keyboard productivity shortcuts.

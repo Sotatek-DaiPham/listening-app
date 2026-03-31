@@ -1,6 +1,25 @@
 # Project Changelog
 
+## [0.4.0] - 2026-03-31
+### Added
+- **Sentence Bookmarking**: Users can now favorite specific segments with a heart icon.
+- **UI Differentiation**: Replaced the duplicate heart icon with a Bookmark Ribbon for the favorites list and a Heart for individual toggles.
+- **Layout Optimization**: Grouped the bookmark toggle with the MASTERED badge for better context.
+- **Favorites Sidebar**: A dedicated sidebar within the practice arena to view and jump to bookmarked sentences.
+- **Bookmark Persistence**: Bookmarks are saved to the database and synced across sessions.
+- **Optimistic UI**: Snappy UI updates when toggling bookmarks.
+
+## [0.3.0] - 2026-03-31
+
+### Added
+- **Audio Volume Control**: Integrated a high-precision volume slider in the `DictationPlayer` for fine-grained audio adjustment.
+- **Volume Persistence**: Implemented `localStorage` syncing to remember user volume preferences across sessions and segments.
+- **Audio Keyboard Shortcuts**: Added `ArrowUp` and `ArrowDown` shortcuts for quick 10% volume increments/decrements.
+- **Dynamic Volume Icons**: Adaptive UI icons that reflect the current audio state (muted, low, or high volume).
+- **Shortcuts Legend**: Added a non-intrusive tooltip in the practice arena to guide users on keyboard productivity.
+
 ## [0.2.0] - 2026-03-30
+
 
 ### Added
 - **AI Grammar Analysis**: Integrated Gemini AI to provide natural Vietnamese translations and concise grammar insights for each segment.
