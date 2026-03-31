@@ -14,7 +14,7 @@ export default async function PracticeArenaPage(props: { params: Promise<{ media
 
   // Fetch true media data with its sliced segments and user progress
   // @ts-ignore - Prisma client types are out of sync in this env but valid at runtime
-  const media = await prisma.media.findUnique({
+  const media = await prisma.media.findFirst({
     where: { 
       id: mediaId,
       userId: session.user.id 
@@ -25,6 +25,9 @@ export default async function PracticeArenaPage(props: { params: Promise<{ media
       },
       progress: {
         where: { isCompleted: true }
+      },
+      bookmarks: {
+        where: { userId: session.user.id }
       }
     }
   })
@@ -101,6 +104,7 @@ export default async function PracticeArenaPage(props: { params: Promise<{ media
 
   const totalSegments = media.segments.length
   const progressPercent = totalSegments > 0 ? Math.round((completedSegmentIds.size / totalSegments) * 100) : 0
+  const bookmarkedSegmentIds = (media as any).bookmarks?.map((b: any) => b.segmentId) || []
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col selection:bg-teal-500/30">
@@ -134,6 +138,7 @@ export default async function PracticeArenaPage(props: { params: Promise<{ media
           initialIndex={calculatedInitialIndex}
           progressPercent={progressPercent}
           completedSegmentIds={Array.from(completedSegmentIds) as string[]}
+          bookmarkedSegmentIds={bookmarkedSegmentIds}
           segments={media.segments.map((s: any) => ({
             id: s.id,
             audioUrl: s.audioUrl,

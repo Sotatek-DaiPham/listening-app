@@ -19,6 +19,7 @@ model User {
   media         Media[]
   sessions      Session[]
   progress      UserProgress[]
+  bookmarks     Bookmark[]
 }
 
 model Account {
@@ -70,6 +71,7 @@ model Media {
   user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   segments          Segment[]
   progress          UserProgress[]
+  bookmarks         Bookmark[]
 }
 
 model Segment {
@@ -84,6 +86,7 @@ model Segment {
   grammarAnalysis String?
   media           Media          @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   progress    UserProgress[]
+  bookmarks   Bookmark[]
 }
 
 model UserProgress {
@@ -100,4 +103,18 @@ model UserProgress {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, segmentId])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  mediaId   String
+  segmentId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  segment   Segment  @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, segmentId])
+  @@index([mediaId])
 }
