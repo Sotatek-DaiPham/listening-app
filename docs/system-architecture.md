@@ -14,7 +14,7 @@ Linguist Dictation Master follows a full-stack Next.js architecture leveraging A
    - Manages authentication via Auth.js (OAuth2).
 
 3. **Data Layer (PostgreSQL)**
-   - Stores user profiles, media metadata, and transcription progress.
+   - Stores user profiles, media metadata, transcription progress, and segment bookmarks.
    
 4. **Storage Layer**
    - Local filesystem storage for audio files (MP3/WAV) uploaded by admins or users.
@@ -22,4 +22,5 @@ Linguist Dictation Master follows a full-stack Next.js architecture leveraging A
 
 ## Key Logic
 - **Normalization**: Text-matching logic strips punctuation and whitespace to ensure phonetic accuracy over strict typing.
-- **Mastery Tracking**: `UserProgress` table tracks `segmentId` completion status, which is visualized as an emerald "MASTERED" badge in the UI.
+- **Mastery Tracking**: `UserProgress` table tracks `segmentId` completion status and bookmark status, which is visualized as an emerald "MASTERED" badge in the UI.
+- **Bookmark Persistence**: The `Bookmark` model handles point-to-point relations between `User`, `Media`, and `Segment` for favorites management.

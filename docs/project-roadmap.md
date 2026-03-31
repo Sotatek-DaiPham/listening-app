@@ -27,5 +27,7 @@
 - [x] AI-Powered Grammar & Translation Insights (Gemini)
 - [x] UX Improvements: Original Sentence Reveal & (Enter) Shortcut
 - [x] Multi-format Text Normalization (Quotes/Smart Punctuation)
+- [x] **Audio Volume Persistence & UI Slider Controls**
+- [x] **Sentence Bookmarking & Favorites Sidebar**
 - [ ] Mobile-Responsive PWA Optimization
 - [ ] Direct YouTube/Google Drive Import
