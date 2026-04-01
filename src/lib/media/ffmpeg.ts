@@ -2,8 +2,22 @@ import ffmpeg from 'fluent-ffmpeg'
 import path from 'path'
 import fs from 'fs'
 
+// Helper to check if a command exists in system PATH
+function isCommandInPath(command: string) {
+  try {
+    const { execSync } = require('child_process');
+    execSync(`${command} -version`, { stdio: 'ignore' });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 // Manual path resolution to bypass Turbopack/Next.js bundling issues with @ffmpeg-installer
 function getFfmpegPath() {
+  // Prioritize system path for robustness on Windows
+  if (isCommandInPath('ffmpeg')) return 'ffmpeg';
+
   const isWin = process.platform === 'win32';
   const binName = isWin ? 'ffmpeg.exe' : 'ffmpeg';
   
@@ -18,17 +32,27 @@ function getFfmpegPath() {
     if (fs.existsSync(p)) return p;
   }
 
-  // Fallback to the installer's own resolution if manual fails (might still fail in build)
-  try {
-    const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
-    return ffmpegInstaller.path;
-  } catch (e) {
-    console.error('Failed to resolve ffmpeg path automatically', e);
-    return 'ffmpeg'; // Hope it's in the system PATH
+  return 'ffmpeg'; 
+}
+
+function getFfprobePath() {
+  if (isCommandInPath('ffprobe')) return 'ffprobe';
+
+  const isWin = process.platform === 'win32';
+  const binName = isWin ? 'ffprobe.exe' : 'ffprobe';
+  
+  // Check the same node_modules path as ffmpeg
+  const ffmpegPath = getFfmpegPath();
+  if (ffmpegPath !== 'ffmpeg') {
+    const ffprobePath = path.join(path.dirname(ffmpegPath), binName);
+    if (fs.existsSync(ffprobePath)) return ffprobePath;
   }
+
+  return 'ffprobe';
 }
 
 ffmpeg.setFfmpegPath(getFfmpegPath())
+ffmpeg.setFfprobePath(getFfprobePath())
 
 export interface FfmpegSliceOptions {
   inputPath: string

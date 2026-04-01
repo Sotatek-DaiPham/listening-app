@@ -99,14 +99,21 @@ export async function processMediaAudio(mediaId: string): Promise<ProcessMediaRe
       const chunkFilename = `chunk_${media.id}_${sub.startTime}.mp3`
       const tempOutputPath = path.join(tempDir, chunkFilename)
 
-      console.log(`[Processor] Slicing segment ${processedCount + 1}/${subtitles.length} at ${sub.startTime}ms`)
-      await sliceAudioSegment({
-        inputPath: physicalSourcePath,
-        outputPath: tempOutputPath,
-        startTimeMs: sub.startTime,
-        durationMs: durationMs
-      })
+      console.log(`[Processor] Slicing segment ${processedCount + 1}/${subtitles.length} at ${sub.startTime}ms to ${tempOutputPath}`)
+      try {
+        await sliceAudioSegment({
+          inputPath: physicalSourcePath,
+          outputPath: tempOutputPath,
+          startTimeMs: sub.startTime,
+          durationMs: durationMs
+        })
+        console.log(`[Processor] Slice SUCCESS for segment ${processedCount + 1}`)
+      } catch (err) {
+        console.error(`[Processor] Slice FAILED for segment ${processedCount + 1}:`, err)
+        throw err
+      }
 
+      console.log(`[Processor] Reading chunk buffer and uploading...`)
       const chunkBuffer = fs.readFileSync(tempOutputPath)
       const finalUrl = await storage.uploadFile(chunkBuffer, chunkFilename, 'audio/mpeg')
       fs.unlinkSync(tempOutputPath)
