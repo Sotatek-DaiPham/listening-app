@@ -19,10 +19,24 @@ export class LocalStorageProvider implements StorageProvider {
     return `/uploads/${filename}`
   }
 
-  async deleteFile(filename: string): Promise<void> {
-    const filePath = path.join(this.baseUploadDir, filename)
+  async deleteFile(fileUrl: string): Promise<void> {
+    // If it's a URL like /uploads/filename.mp3, strip the prefix
+    const relativePath = fileUrl.startsWith('/uploads/') 
+      ? fileUrl.substring('/uploads/'.length) 
+      : fileUrl
+
+    // Normalize and join to get absolute path
+    const filePath = path.join(this.baseUploadDir, relativePath)
+
+    // Security: Ensure the file is actually inside the baseUploadDir
+    if (!filePath.startsWith(this.baseUploadDir)) {
+      console.warn(`[Storage] Attempted to delete file outside upload directory: ${filePath}`)
+      return
+    }
+
     try {
       await fs.unlink(filePath)
+      console.log(`[Storage] Deleted file: ${filePath}`)
     } catch (e: any) {
       // Ignore "no such file" errors
       if (e.code !== 'ENOENT') throw e;

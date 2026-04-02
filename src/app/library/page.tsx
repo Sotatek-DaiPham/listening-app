@@ -5,6 +5,7 @@ import Link from "next/link"
 import { SignOutButton } from "@/components/auth/auth-buttons"
 import { DeleteMediaButton } from "@/components/library/delete-media-button"
 import { EditMediaButton } from "@/components/library/edit-media-button"
+import { YoutubeImportCard } from "@/components/library/youtube-import-card"
 
 export default async function LibraryPage() {
   const session = await auth()
@@ -48,10 +49,12 @@ export default async function LibraryPage() {
           </div>
         </header>
 
+        <YoutubeImportCard />
+
         {mediaList.length === 0 ? (
           <div className="text-center py-24 border-2 border-dashed border-slate-700/50 rounded-3xl bg-slate-800/30">
             <h3 className="text-xl font-semibold text-slate-300 mb-2">Your library is empty</h3>
-            <p className="text-slate-500 mb-6">Upload your first MP3 and SRT file to start practicing.</p>
+            <p className="text-slate-500 mb-6">Upload an MP3/SRT file or paste a YouTube link to start practicing.</p>
             <Link href="/library/upload" className="font-medium text-teal-400 hover:text-teal-300">
               Upload now &rarr;
             </Link>

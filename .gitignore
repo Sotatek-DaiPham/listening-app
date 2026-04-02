@@ -42,3 +42,8 @@ next-env.d.ts
 
 /src/generated/prisma
 /public/uploads
+/public/uploads/temp
+
+# YouTube downloader
+/yt-dlp.exe
+*-player-script.js
