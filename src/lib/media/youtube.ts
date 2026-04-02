@@ -35,46 +35,50 @@ function formatTimestamp(ms: number): string {
  * Downloads audio and transcript from a YouTube URL using local yt-dlp binary
  */
 export async function downloadYouTubeMedia(url: string): Promise<YouTubeMediaInfo> {
-  const ytDlpPath = path.join(process.cwd(), "yt-dlp.exe");
-  const tempDir = path.join(process.cwd(), "public", "uploads", "temp");
+  const projectRoot = process.cwd();
+  const tempDirRelative = path.join("public", "uploads", "temp");
+  const tempDir = path.join(projectRoot, tempDirRelative);
   if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
 
   const timestamp = Date.now();
   const audioFilename = `yt_${timestamp}.mp3`;
   const audioPath = path.join(tempDir, audioFilename);
-  const subtitlePrefix = path.join(tempDir, `yt_${timestamp}`);
 
   try {
-    console.log(`[YouTube] Fetching metadata and downloading with yt-dlp: ${url}`);
+    console.log(`[YouTube] Fetching metadata and downloading with containerized yt-dlp: ${url}`);
     
-    // 1. Get info (Title, Thumbnail)
-    const infoJson = execSync(`"${ytDlpPath}" --dump-json "${url}"`, { encoding: "utf8" });
+    // 1. Get info (Title, Thumbnail) via Docker
+    // We mount root to /app and work from there
+    const infoCommand = `docker run --rm -v "${projectRoot}:/app" -w /app jauderho/yt-dlp --dump-json "${url}"`;
+    const infoJson = execSync(infoCommand, { encoding: "utf8" });
     const info = JSON.parse(infoJson);
     const title = info.title;
     const thumbnail = info.thumbnail;
 
-    // 2. Download Audio and Subtitles simultaneously
-    // --write-sub: get manual subtitles
-    // --write-auto-subs: get auto-generated as fallback
-    // --sub-format srt: output srt
-    // --extract-audio --audio-format mp3: convert to mp3
-    console.log(`[YouTube] Downloading audio and subtitles (prioritizing manual)...`);
+    // 2. Download Audio and Subtitles simultaneously via Docker
+    console.log(`[YouTube] Downloading audio and subtitles (prioritizing manual) in container...`);
     
-    // We use spawn to handle the potential long wait and output
+    // Use container-relative path for output
+    const outputPathInContainer = `${tempDirRelative}/yt_${timestamp}.%(ext)s`.replace(/\\/g, '/');
+
     const cmdArgs = [
+      "run", "--rm",
+      "-v", `${projectRoot}:/app`,
+      "-w", "/app",
+      "jauderho/yt-dlp",
       url,
       "--extract-audio",
       "--audio-format", "mp3",
-      "--write-sub",           // Added: get manual subs
-      "--write-auto-sub",      // Fallback
-      "--sub-lang", "en", // Specific English only to avoid 429
+      "--write-sub",
+      "--write-auto-sub",
+      "--sub-lang", "en",
       "--sub-format", "srt",
-      "--output", `${tempDir}/yt_${timestamp}.%(ext)s`,
+      "--output", outputPathInContainer,
       "--no-playlist"
     ];
 
     await new Promise((resolve, reject) => {
-      const child = spawn(ytDlpPath, cmdArgs);
+      const child = spawn("docker", cmdArgs);
       let stderr = "";
 
       child.stderr.on("data", (data) => {
@@ -83,7 +87,7 @@ export async function downloadYouTubeMedia(url: string): Promise<YouTubeMediaInf
 
       child.on("close", (code) => {
         if (code === 0) resolve(true);
-        else reject(new Error(`yt-dlp exited with code ${code}\nStderr: ${stderr}`));
+        else reject(new Error(`Docker yt-dlp exited with code ${code}\nStderr: ${stderr}`));
       });
       child.on("error", reject);
     });

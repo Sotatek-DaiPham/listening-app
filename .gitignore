@@ -45,5 +45,4 @@ next-env.d.ts
 /public/uploads/temp
 
 # YouTube downloader
-/yt-dlp.exe
 *-player-script.js
