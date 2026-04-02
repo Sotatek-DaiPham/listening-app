@@ -14,7 +14,13 @@ export async function POST(
     // @ts-ignore
     const segment = await (prisma.segment || prisma['segment']).findUnique({
       where: { id: segmentId },
-      select: { text: true, grammarAnalysis: true }
+      select: { 
+        text: true, 
+        grammarAnalysis: true,
+        media: {
+          select: { title: true }
+        }
+      }
     });
 
     if (!segment) {
@@ -28,8 +34,8 @@ export async function POST(
     }
 
     // 2. Perform analysis if not cached
-    console.log("Calling Gemini AI for analysis...");
-    const analysis = await analyzeGrammar(segment.text);
+    console.log("Calling Gemini AI for analysis with context:", segment.media?.title);
+    const analysis = await analyzeGrammar(segment.text, segment.media?.title);
     console.log("Gemini response received.");
 
     // 3. Update database with the new analysis
