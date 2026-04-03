@@ -16,11 +16,12 @@ export function DictationPlayer({ audioUrl, onComplete }: DictationPlayerProps) 
   const [volume, setVolume] = useState(1.0)
   const [playbackRate, setPlaybackRate] = useState(1.0)
   const [duration, setDuration] = useState(0)
+  const [isMounted, setIsMounted] = useState(false)
 
   const speeds = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
 
-  // Initialize from localStorage
   useEffect(() => {
+    setIsMounted(true)
     const savedVolume = localStorage.getItem("practice-volume")
     if (savedVolume !== null) {
       const v = parseFloat(savedVolume)
@@ -190,18 +191,20 @@ export function DictationPlayer({ audioUrl, onComplete }: DictationPlayerProps) 
           onClick={handleSeek}
         >
           {/* Decorative Waveform Mockup */}
-          <div className="absolute inset-x-0 h-8 flex items-end justify-between opacity-10 pointer-events-none group-hover:opacity-20 transition-opacity duration-500">
-            {[...Array(40)].map((_, i) => (
-              <div 
-                key={i} 
-                className={clsx(
-                  "w-[2px] rounded-full bg-teal-400 transition-all duration-300",
-                  (i / 40) * 100 < progress ? "bg-teal-400 opacity-100" : "bg-slate-500 opacity-50"
-                )} 
-                style={{ height: `${20 + Math.sin(i * 0.5) * 40 + Math.random() * 40}%` }}
-              />
-            ))}
-          </div>
+          {isMounted && (
+            <div className="absolute inset-x-0 h-8 flex items-end justify-between opacity-10 pointer-events-none group-hover:opacity-20 transition-opacity duration-500">
+              {[...Array(40)].map((_, i) => (
+                <div 
+                  key={i} 
+                  className={clsx(
+                    "w-[2px] rounded-full bg-teal-400 transition-all duration-300",
+                    (i / 40) * 100 < progress ? "bg-teal-400 opacity-100" : "bg-slate-500 opacity-50"
+                  )} 
+                  style={{ height: `${20 + Math.sin(i * 0.5) * 30 + Math.cos(i * 0.8) * 20 + 25}%` }}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Scrubber Line */}
           <div className="w-full h-[6px] bg-slate-800 rounded-full relative overflow-hidden">
@@ -282,7 +285,7 @@ export function DictationPlayer({ audioUrl, onComplete }: DictationPlayerProps) 
             >
               {speeds.map(s => (
                 <option key={s} value={s} className="bg-slate-900 text-slate-200">
-                  {s === 1.0 ? "Norm" : `${s}x`}
+                  {s === 1.0 ? "1" : `${s}x`}
                 </option>
               ))}
             </select>

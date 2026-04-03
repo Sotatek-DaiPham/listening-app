@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { DictationPlayer } from "./dictation-player"
 import { DictationInput } from "./dictation-input"
+import { DictionaryBubble } from "./dictionary-bubble"
 import Link from "next/link"
 import ReactMarkdown from "react-markdown"
 
@@ -38,6 +39,8 @@ export function PracticeClient({
   const [grammarAnalysis, setGrammarAnalysis] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [selectedWord, setSelectedWord] = useState<string | null>(null)
+  const [bubblePos, setBubblePos] = useState({ top: 0, left: 0 })
 
   // Reset mastered state when segment changes
   useEffect(() => {
@@ -309,10 +312,37 @@ export function PracticeClient({
                       </svg>
                       Original Sentence
                     </h4>
-                    <p className="text-lg sm:text-xl font-medium text-slate-100 leading-relaxed italic decoration-teal-500/30 underline-offset-8">
+                    <p 
+                      className="text-lg sm:text-xl font-medium text-slate-100 leading-relaxed italic decoration-teal-500/30 underline-offset-8 select-text cursor-text"
+                      onMouseUp={(e) => {
+                        const selection = window.getSelection()
+                        const text = selection?.toString().trim()
+                        if (text && text.length > 0 && text.length < 50) {
+                          const range = selection?.getRangeAt(0)
+                          const rect = range?.getBoundingClientRect()
+                          if (rect) {
+                            setSelectedWord(text)
+                            setBubblePos({ 
+                              top: rect.top + window.scrollY, 
+                              left: rect.left + rect.width / 2 + window.scrollX 
+                            })
+                          }
+                        }
+                      }}
+                    >
                       "{currentSegment.text}"
                     </p>
                   </div>
+
+                  {selectedWord && (
+                    <DictionaryBubble
+                      word={selectedWord}
+                      context={currentSegment.text}
+                      mediaTitle={mediaTitle}
+                      position={bubblePos}
+                      onClose={() => setSelectedWord(null)}
+                    />
+                  )}
 
                   {grammarAnalysis && (
                     <div className="w-full p-6 bg-slate-800/40 border border-slate-700/50 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-500">

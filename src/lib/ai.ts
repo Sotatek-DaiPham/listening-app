@@ -19,20 +19,34 @@ class OllamaProvider implements AIProvider {
   private modelName = "gemma4:e2b"; // Latest Gemma 4 E2B
 
   async generateText(prompt: string): Promise<string> {
-    const response = await fetch(`${this.host}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: this.modelName,
-        messages: [{ role: "user", content: prompt }],
-        stream: false,
-        options: { temperature: 0.1 }
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-    if (!response.ok) throw new Error(`Ollama error: ${response.statusText}`);
-    const data = await response.json();
-    return data.message?.content?.trim() || "";
+    try {
+      const response = await fetch(`${this.host}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: this.modelName,
+          messages: [{ role: "user", content: prompt }],
+          stream: false,
+          options: { temperature: 0.1 }
+        }),
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) throw new Error(`Ollama error: ${response.statusText}`);
+      const data = await response.json();
+      return data.message?.content?.trim() || "";
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error("Ollama request timed out after 15s");
+      }
+      throw error;
+    }
   }
 
   async *generateStream(prompt: string): AsyncIterable<string> {
@@ -139,21 +153,28 @@ class GroqProvider implements AIProvider {
 
 /**
  * AI Manager with Fallback Mechanism
+ * @param priority - Which provider group to prioritize ('local' or 'cloud')
  */
-async function executeWithProvider<T>(fn: (provider: AIProvider) => Promise<T>): Promise<T> {
+async function executeWithProvider<T>(
+  fn: (provider: AIProvider) => Promise<T>,
+  priority: 'local' | 'cloud' = 'cloud'
+): Promise<T> {
   const providers: AIProvider[] = [];
   
-  // 1. Prioritize Ollama (Local First) as requested by user
-  providers.push(new OllamaProvider());
-  
-  // 2. Groq (Fast Cloud Backup)
-  if (process.env.GROQ_API_KEY) {
-    providers.push(new GroqProvider());
-  }
-  
-  // 3. Gemini (Fallback Cloud)
-  if (process.env.GOOGLE_API_KEY) {
-    providers.push(new GeminiProvider());
+  const ollama = new OllamaProvider();
+  const groq = process.env.GROQ_API_KEY ? new GroqProvider() : null;
+  const gemini = process.env.GOOGLE_API_KEY ? new GeminiProvider() : null;
+
+  if (priority === 'cloud' && groq) {
+    // Cloud-first (Fast)
+    providers.push(groq);
+    providers.push(ollama);
+    if (gemini) providers.push(gemini);
+  } else {
+    // Local-first (Sovereign)
+    providers.push(ollama);
+    if (groq) providers.push(groq);
+    if (gemini) providers.push(gemini);
   }
 
   let lastError: any = null;
@@ -211,18 +232,18 @@ export async function analyzeGrammar(
     const scriptContext = fullContext ? `\n--- NGỮ CẢNH TOÀN BÀI KỊCH BẢN ---\n${fullContext}\n--- KẾT THÚC NGỮ CẢNH ---\n` : "";
     
     const prompt = `Bạn là một chuyên gia ngôn ngữ học. ${titleContext}
-    Hãy sử dụng phần ngữ cảnh của bài kịch bản dưới đây (nếu có) để hiểu rõ các đại từ thay thế (it, they, this...) hoặc các từ đa nghĩa trong câu cần xử lý.
+    Sử dụng ngữ cảnh kịch bản để dịch chính xác nhất:
     ${scriptContext}
     
-    ĐỐI VỚI CÂU TIẾNG ANH DƯỚI ĐÂY: "${text}"
+    CÂU CẦN XỬ LÝ: "${text}"
     
-    HÃY THỰC HIỆN CÁC YÊU CẦU SAU (TRÌNH BÀY BẰNG TIẾNG VIỆT):
-    1. **Bản dịch tự nhiên**: Dịch thoát ý, mượt mà bám sát ngữ cảnh của toàn bộ bài nghe.
-    2. **Phân tích ngữ pháp**: Phân tích cấu trúc quan trọng hoặc từ khó (CỰC KỲ NGẮN GỌN, súc tích, tối đa 3-4 gạch đầu dòng).
+    YÊU CẦU (DÙNG TIẾNG VIỆT):
+    1. **Bản dịch tự nhiên**: [Dịch trực tiếp câu trên, không lặp lại câu tiếng Anh, không dùng "Câu này có nghĩa là"]
+    2. **Phân tích ngữ pháp**: [Phân tích cấu trúc quan trọng - Tối đa 3 gạch đầu dòng cực ngắn]
     
     YÊU CẦU NGHIÊM NGẶT: 
-    - TRÌNH BÀY TRỰC TIẾP từng mục. 
-    - TUYỆT ĐỐI KHÔNG chào hỏi, không dẫn dắt.`;
+    - TRẢ LỜI TRỰC TIẾP VÀO CÁC MỤC. 
+    - TUYỆT ĐỐI KHÔNG chào hỏi, không dẫn dắt, không giải thích dài dòng.`;
 
     const response = await provider.generateText(prompt);
     // Safety cleaning to ensure we start directly with the content
@@ -261,4 +282,38 @@ export async function* getAIStream(prompt: string): AsyncIterable<string> {
   } else {
     throw new Error("No provider available for streaming");
   }
+}
+
+/**
+ * Gets the definition and usage of a specific word or phrase in Vietnamese,
+ * considering the sentence context.
+ */
+export async function getWordDefinition(
+  word: string,
+  context: string,
+  mediaTitle?: string
+): Promise<string> {
+  if (!word.trim()) return "";
+
+  return executeWithProvider(async (provider) => {
+    const titleContext = mediaTitle ? `Chủ đề của bài nghe: "${mediaTitle}". ` : "";
+    const prompt = `Bạn là một từ điển Anh-Việt cao cấp chuẩn quốc tế (như Oxford/Cambridge). 
+    
+    TỪ/CỤM TỪ CẦN GIẢI THÍCH: "${word}"
+    NGỮ CẢNH: "${context}" (Chủ đề: ${mediaTitle || 'N/A'})
+    
+    YÊU CẦU TRÌNH BÀY (DÙNG TIẾNG VIỆT AND BẮT BUỘC BÔI ĐẬM ĐỀ MỤC):
+    - **IPA**: [Phiên âm quốc tế chuẩn của từ "${word}"]
+    - **Nghĩa**: [Nghĩa ngắn gọn nhất của "${word}" trong ngữ cảnh này]
+    - **Từ loại**: [Loại từ]
+    - **Ví dụ**: [1 câu ví dụ tiếng Anh khác có chứa "${word}"] - [Dịch]
+    
+    YÊU CẦU NGHIÊM NGẶT ĐỂ ĐẢM BẢO TÍNH CHUYÊN NGHIỆP: 
+    - CHỈ GIẢI THÍCH DUY NHẤT TỪ "${word}". TUYỆT ĐỐI KHÔNG GIẢI THÍCH TIÊU ĐỀ HAY CÁC TỪ KHÁC TRONG NGỮ CẢNH.
+    - PHẢI dùng dấu gạch đầu dòng và bôi đậm tên đề mục y hệt mẫu trên (ví dụ: **IPA**:, **Nghĩa**:).
+    - TUYỆT ĐỐI KHÔNG lặp lại từ "${word}" trong phần nội dung giải thích (chỉ được xuất hiện ở phần ví dụ).
+    - KHÔNG DÙNG các câu dẫn dắt. KHÔNG CHÀO HỎI. TRẢ LỜI TRỰC TIẾP.`;
+
+    return await provider.generateText(prompt);
+  }, 'cloud');
 }
