@@ -17,6 +17,8 @@ export async function POST(
       select: { 
         text: true, 
         grammarAnalysis: true,
+        mediaId: true,
+        startTime: true,
         media: {
           select: { title: true }
         }
@@ -33,12 +35,37 @@ export async function POST(
       return NextResponse.json({ analysis: segment.grammarAnalysis });
     }
 
-    // 2. Perform analysis if not cached
-    console.log("Calling Gemini AI for analysis with context:", segment.media?.title);
-    const analysis = await analyzeGrammar(segment.text, segment.media?.title);
-    console.log("Gemini response received.");
+    // 2. Fetch context (10 segments before and 10 after) for better AI understanding
+    console.log("Fetching script context for media:", segment.mediaId);
+    const [beforeSegments, afterSegments] = await Promise.all([
+      // @ts-ignore
+      (prisma.segment || prisma['segment']).findMany({
+        where: { mediaId: segment.mediaId, startTime: { lt: segment.startTime } },
+        orderBy: { startTime: 'desc' },
+        take: 10,
+        select: { text: true }
+      }),
+      // @ts-ignore
+      (prisma.segment || prisma['segment']).findMany({
+        where: { mediaId: segment.mediaId, startTime: { gt: segment.startTime } },
+        orderBy: { startTime: 'asc' },
+        take: 10,
+        select: { text: true }
+      })
+    ]);
 
-    // 3. Update database with the new analysis
+    const fullContext = [
+      ...[...beforeSegments].reverse(),
+      { text: `>>> ${segment.text} <<<` }, // Highlight the current segment in context
+      ...afterSegments
+    ].map(s => s.text).join(" ");
+
+    // 3. Perform analysis with full context
+    console.log("Calling AI Service for enhanced analysis...");
+    const analysis = await analyzeGrammar(segment.text, segment.media?.title, fullContext);
+    console.log("AI response received.");
+
+    // 4. Update database with the new analysis
     try {
       // @ts-ignore
       await (prisma.segment || prisma['segment']).update({

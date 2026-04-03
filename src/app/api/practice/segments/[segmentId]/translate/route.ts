@@ -30,9 +30,9 @@ export async function POST(
     }
 
     // 2. Perform translation if not cached
-    console.log("Calling Gemini AI...");
+    console.log("Calling AI Service...");
     const translation = await translateToVietnamese(segment.text);
-    console.log("Gemini response received.");
+    console.log("AI response received.");
 
     // 3. Update database with the new translation
     // Using raw SQL fallback just in case of Prisma type lag on Windows
